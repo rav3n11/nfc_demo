@@ -87,6 +87,7 @@ export default function Home() {
   const [telebirrReference, setTelebirrReference] = useState<string | null>(
     null,
   );
+  const [needsReset, setNeedsReset] = useState(false);
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
     tone: "info",
     message: "Android Chrome + NFC only. Tap “Read card” to wake the reader.",
@@ -121,11 +122,14 @@ export default function Home() {
       ndef.onreading = (event: NDEFReadingEvent) => {
         const balanceFromCard = extractBalance(event.message);
         if (balanceFromCard === null) {
+          setNeedsReset(true);
           setStatus({
             tone: "alert",
-            message: "Card detected but balance could not be parsed.",
+            message:
+              "Card detected but no balance was found. Tap “Reset to 0 ETB” to initialize.",
           });
         } else {
+          setNeedsReset(false);
           setCard({
             balance: balanceFromCard,
             serialNumber: event.serialNumber ?? "Unknown card",
@@ -178,6 +182,7 @@ export default function Home() {
           tone: "success",
           message: "Card updated with the new balance.",
         });
+        setNeedsReset(false);
       } finally {
         setIsWriting(false);
       }
@@ -354,6 +359,16 @@ export default function Home() {
               </button>
             )}
           </div>
+          {needsReset && (
+            <button
+              type="button"
+              onClick={() => writeBalanceToCard(0)}
+              disabled={isWriting}
+              className="mt-3 w-full rounded-2xl border border-[#F44C24]/40 bg-white py-3 text-sm font-semibold text-[#9E2F1B] transition hover:bg-[#FFF2EE] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isWriting ? "Writing…" : "Reset card to 0 ETB"}
+            </button>
+          )}
 
           <p className="mt-3 text-center text-xs text-[#595959]">
             Tip: Enable NFC, keep Chrome in the foreground, and tap the card on
