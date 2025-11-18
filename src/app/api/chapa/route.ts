@@ -11,9 +11,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { cardSerial } = await request
+    const { amount: userAmount, cardSerial } = await request
       .json()
-      .catch(() => ({ cardSerial: "UNKNOWN" }));
+      .catch(() => ({ amount: 50, cardSerial: "UNKNOWN" }));
 
     const txRef = `ELPA-${Date.now()}`;
     const origin = request.headers.get("origin") ?? "http://localhost:3000";
@@ -26,14 +26,15 @@ export async function POST(request: Request) {
       last_name: "Pilot",
       phone_number: "+251911000000",
       tx_ref: txRef,
-      return_url: `${origin}/chapa/return`,
+      return_url: `${origin}/chapa/return?tx_ref=${txRef}`,
       callback_url: `${origin}/api/chapa/callback`,
       meta: {
         cardSerial: cardSerial ?? "UNKNOWN",
+        userAmount: String(userAmount ?? 50),
       },
       customization: {
         title: "ELPA NFC refill",
-        description: "1 ETB NFC top-up demo via Chapa",
+        description: "NFC top-up demo via Chapa",
       },
     };
 

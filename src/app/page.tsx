@@ -82,11 +82,11 @@ const extractBalance = (message: NDEFMessagePayload): number | null => {
 };
 
 export default function Home() {
-  const TOP_UP_AMOUNT = 1;
-
   const [card, setCard] = useState<CardSnapshot | null>(null);
+  const [amount, setAmount] = useState("50");
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [needsReset, setNeedsReset] = useState(false);
+  const MAX_AMOUNT = 10000;
 
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
     tone: "info",
@@ -102,6 +102,107 @@ export default function Home() {
       setNfcSupported(true);
     }
   }, []);
+
+  const writeBalanceToCard = useCallback(
+    async (newBalance: number) => {
+      if (!nfcSupported || !window.NDEFReader) {
+        throw new Error("Web NFC is not available.");
+      }
+      try {
+        setIsWriting(true);
+        setStatus({
+          tone: "info",
+          message: "Hold the card still while we write the new balance…",
+        });
+        const ndef = new window.NDEFReader();
+        await ndef.write(`BAL:${newBalance.toFixed(2)}`);
+        setStatus({
+          tone: "success",
+          message: "Card updated with the new balance.",
+        });
+        setNeedsReset(false);
+      } finally {
+        setIsWriting(false);
+      }
+    },
+    [nfcSupported],
+  );
+
+  useEffect(() => {
+    const handlePendingPayment = async () => {
+      if (typeof window === "undefined") return;
+
+      const stored = localStorage.getItem("chapa_payment_result");
+      const storedCard = localStorage.getItem("chapa_pending_card");
+      if (!stored || !storedCard) return;
+
+      try {
+        const paymentResult = JSON.parse(stored);
+        const cardInfo = JSON.parse(storedCard);
+
+        if (Date.now() - paymentResult.timestamp > 5 * 60 * 1000) {
+          localStorage.removeItem("chapa_payment_result");
+          localStorage.removeItem("chapa_pending_card");
+          return;
+        }
+
+        if (paymentResult.status === "success") {
+          const userAmount = paymentResult.userAmount ?? cardInfo.userAmount ?? 50;
+          const startingBalance = card?.balance ?? cardInfo.balance ?? 0;
+          const updatedBalance = Number(
+            (startingBalance + userAmount).toFixed(2),
+          );
+
+          if (!card) {
+            setStatus({
+              tone: "info",
+              message: `Payment confirmed! Please read your card to update it with +${formatETB(userAmount)}.`,
+            });
+            localStorage.removeItem("chapa_payment_result");
+            localStorage.removeItem("chapa_pending_card");
+            return;
+          }
+
+          if (card.serialNumber !== cardInfo.serialNumber) {
+            setStatus({
+              tone: "alert",
+              message: "Card mismatch. Please read the same card you used for payment.",
+            });
+            localStorage.removeItem("chapa_payment_result");
+            localStorage.removeItem("chapa_pending_card");
+            return;
+          }
+
+          localStorage.removeItem("chapa_payment_result");
+          localStorage.removeItem("chapa_pending_card");
+
+          setStatus({
+            tone: "info",
+            message: `Payment confirmed! Updating card with +${formatETB(userAmount)}…`,
+          });
+
+          await writeBalanceToCard(updatedBalance);
+
+          setCard({
+            balance: updatedBalance,
+            serialNumber: card.serialNumber,
+            lastSynced: new Date().toISOString(),
+          });
+          setPaymentReference(paymentResult.txRef ?? null);
+          setStatus({
+            tone: "success",
+            message: `Card updated! Added ${formatETB(userAmount)} to your balance.`,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to process pending payment", error);
+        localStorage.removeItem("chapa_payment_result");
+        localStorage.removeItem("chapa_pending_card");
+      }
+    };
+
+    handlePendingPayment();
+  }, [card, writeBalanceToCard]);
 
   const handleReadCard = useCallback(async () => {
     if (!nfcSupported || !window.NDEFReader) {
@@ -165,31 +266,6 @@ export default function Home() {
     }
   }, [nfcSupported]);
 
-  const writeBalanceToCard = useCallback(
-    async (newBalance: number) => {
-      if (!nfcSupported || !window.NDEFReader) {
-        throw new Error("Web NFC is not available.");
-      }
-      try {
-        setIsWriting(true);
-        setStatus({
-          tone: "info",
-          message: "Hold the card still while we write the new balance…",
-        });
-        const ndef = new window.NDEFReader();
-        await ndef.write(`BAL:${newBalance.toFixed(2)}`);
-        setStatus({
-          tone: "success",
-          message: "Card updated with the new balance.",
-        });
-        setNeedsReset(false);
-      } finally {
-        setIsWriting(false);
-      }
-    },
-    [nfcSupported],
-  );
-
   const handleChapaRefill = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -200,13 +276,39 @@ export default function Home() {
         });
         return;
       }
+      const parsedAmount = Number(amount);
+      if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+        setStatus({
+          tone: "alert",
+          message: "Amount has to be greater than zero.",
+        });
+        return;
+      }
+      if (parsedAmount > MAX_AMOUNT) {
+        setStatus({
+          tone: "alert",
+          message: `Maximum top-up per tap is ${formatETB(MAX_AMOUNT)}.`,
+        });
+        return;
+      }
       try {
         setIsProcessing(true);
         setPaymentReference(null);
         setStatus({
           tone: "info",
-          message: "Opening Chapa checkout for ETB 1…",
+          message: "Redirecting to Chapa checkout…",
         });
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "chapa_pending_card",
+            JSON.stringify({
+              serialNumber: card.serialNumber,
+              balance: card.balance,
+              userAmount: parsedAmount,
+            }),
+          );
+        }
 
         const response = await fetch("/api/chapa", {
           method: "POST",
@@ -214,6 +316,7 @@ export default function Home() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            amount: parsedAmount,
             cardSerial: card.serialNumber,
           }),
         });
@@ -223,26 +326,12 @@ export default function Home() {
           throw new Error(payload.error ?? "Chapa payment failed.");
         }
 
-        const updatedBalance = Number(
-          (card.balance + TOP_UP_AMOUNT).toFixed(2),
-        );
-        await writeBalanceToCard(updatedBalance);
-
-        setCard({
-          balance: updatedBalance,
-          serialNumber: card.serialNumber,
-          lastSynced: new Date().toISOString(),
-        });
-        setPaymentReference(payload.txRef ?? null);
-        setStatus({
-          tone: "success",
-          message:
-            "Chapa checkout launched in a new tab and the card is preloaded with +1 ETB for the demo.",
-        });
         const checkoutUrl: string | undefined =
           payload.checkoutUrl ?? payload.data?.checkout_url;
         if (typeof window !== "undefined" && checkoutUrl) {
-          window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+          window.location.href = checkoutUrl;
+        } else {
+          throw new Error("Chapa did not return a checkout URL.");
         }
       } catch (error) {
         console.error(error);
@@ -253,11 +342,10 @@ export default function Home() {
               ? error.message
               : "Unable to reach Chapa right now.",
         });
-      } finally {
         setIsProcessing(false);
       }
     },
-    [card, writeBalanceToCard, TOP_UP_AMOUNT],
+    [amount, card, MAX_AMOUNT],
   );
 
   return (
@@ -273,8 +361,7 @@ export default function Home() {
                 NFC balance & Chapa refill
               </h1>
               <p className="text-sm text-[#595959]">
-                Step 1 read card · Step 2 pay 1 ETB via Chapa · Step 3 auto write
-                the new balance.
+                Step 1 read card · Step 2 pay via Chapa · Step 3 write balance back.
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -374,12 +461,21 @@ export default function Home() {
 
         <section className="rounded-3xl border border-[#2C2E7B]/10 bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.05)]">
           <form className="space-y-4" onSubmit={handleChapaRefill}>
-            <div className="rounded-2xl border border-[#007FA3]/10 bg-[#E4F4F9] px-4 py-4 text-sm text-[#00516E]">
-              <p className="font-semibold text-[#007FA3]">Chapa checkout</p>
-              <p className="mt-1">
-                Every tap charges exactly {formatETB(TOP_UP_AMOUNT)}. Checkout
-                opens in a new tab and this demo immediately pushes the extra 1
-                ETB onto the card.
+            <div>
+              <p className="text-sm font-semibold text-[#2C2E7B]">
+                Refill amount (ETB)
+              </p>
+              <input
+                type="number"
+                min={5}
+                step={5}
+                max={MAX_AMOUNT}
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-2xl font-semibold text-slate-900 outline-none focus:border-[#F5AD00]"
+              />
+              <p className="mt-1 text-xs text-[#595959]">
+                Minimum 5 ETB, maximum {formatETB(MAX_AMOUNT)} per refill.
               </p>
             </div>
 
@@ -394,7 +490,7 @@ export default function Home() {
               disabled={isProcessing || isWriting}
               className="w-full rounded-2xl bg-[#2C2E7B] py-4 text-lg font-semibold text-white transition hover:bg-[#1e2060] disabled:cursor-not-allowed disabled:bg-[#2C2E7B]/50"
             >
-              {isProcessing ? "Connecting to Chapa…" : "Pay 1 ETB with Chapa"}
+              {isProcessing ? "Redirecting to Chapa…" : "Pay with Chapa"}
             </button>
           </form>
         </section>
