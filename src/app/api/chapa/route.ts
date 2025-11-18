@@ -19,12 +19,10 @@ export async function POST(request: Request) {
     const origin = request.headers.get("origin") ?? "http://localhost:3000";
 
     const payload = {
+      // amount: userAmount,
       amount: "1",
       currency: "ETB",
-      email: "demo@elpa.et",
-      first_name: "ELPA",
-      last_name: "Pilot",
-      phone_number: "+251911000000",
+      // phone_number: "+251911000000",
       tx_ref: txRef,
       return_url: `${origin}/chapa/return?tx_ref=${txRef}`,
       callback_url: `${origin}/api/chapa/callback`,
@@ -51,9 +49,27 @@ export async function POST(request: Request) {
 
     if (!chapaResponse.ok) {
       console.error("Chapa API error:", chapaPayload);
+      
+      let errorMessage = "Unable to initialize Chapa payment.";
+      
+      if (chapaPayload?.message) {
+        errorMessage = chapaPayload.message;
+      } else if (chapaPayload?.error) {
+        if (typeof chapaPayload.error === "string") {
+          errorMessage = chapaPayload.error;
+        } else if (chapaPayload.error?.email) {
+          errorMessage = `Email validation failed: ${JSON.stringify(chapaPayload.error.email)}`;
+        } else {
+          errorMessage = `Validation error: ${JSON.stringify(chapaPayload.error)}`;
+        }
+      } else if (chapaPayload?.errors) {
+        errorMessage = `Validation errors: ${JSON.stringify(chapaPayload.errors)}`;
+      }
+      
       return NextResponse.json(
         {
-          error: chapaPayload?.message ?? chapaPayload?.error ?? "Unable to initialize Chapa payment.",
+          error: errorMessage,
+          details: chapaPayload,
         },
         { status: chapaResponse.status },
       );
