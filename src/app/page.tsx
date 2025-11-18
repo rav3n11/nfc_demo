@@ -82,12 +82,12 @@ const extractBalance = (message: NDEFMessagePayload): number | null => {
 };
 
 export default function Home() {
+  const TOP_UP_AMOUNT = 1;
+
   const [card, setCard] = useState<CardSnapshot | null>(null);
-  const [amount, setAmount] = useState("50");
-  const [telebirrReference, setTelebirrReference] = useState<string | null>(
-    null,
-  );
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [needsReset, setNeedsReset] = useState(false);
+
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
     tone: "info",
     message: "Android Chrome + NFC only. Tap “Read card” to wake the reader.",
@@ -190,7 +190,7 @@ export default function Home() {
     [nfcSupported],
   );
 
-  const handleTelebirrRefill = useCallback(
+  const handleChapaRefill = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!card) {
@@ -200,40 +200,31 @@ export default function Home() {
         });
         return;
       }
-      const parsedAmount = Number(amount);
-      if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-        setStatus({
-          tone: "alert",
-          message: "Amount has to be greater than zero.",
-        });
-        return;
-      }
       try {
         setIsProcessing(true);
-        setTelebirrReference(null);
+        setPaymentReference(null);
         setStatus({
           tone: "info",
-          message: "Opening Telebirr and preparing to push the new balance…",
+          message: "Opening Chapa checkout for ETB 1…",
         });
 
-        const response = await fetch("/api/telebirr", {
+        const response = await fetch("/api/chapa", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: parsedAmount,
             cardSerial: card.serialNumber,
           }),
         });
 
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(payload.error ?? "Telebirr payment failed.");
+          throw new Error(payload.error ?? "Chapa payment failed.");
         }
 
         const updatedBalance = Number(
-          (card.balance + parsedAmount).toFixed(2),
+          (card.balance + TOP_UP_AMOUNT).toFixed(2),
         );
         await writeBalanceToCard(updatedBalance);
 
@@ -242,12 +233,17 @@ export default function Home() {
           serialNumber: card.serialNumber,
           lastSynced: new Date().toISOString(),
         });
-        setTelebirrReference(payload.transactionId);
+        setPaymentReference(payload.txRef ?? null);
         setStatus({
           tone: "success",
-          message: `Telebirr confirmed ${formatETB(parsedAmount)} and the card was updated.`,
+          message:
+            "Chapa checkout launched in a new tab and the card is preloaded with +1 ETB for the demo.",
         });
-        setAmount("50");
+        const checkoutUrl: string | undefined =
+          payload.checkoutUrl ?? payload.data?.checkout_url;
+        if (typeof window !== "undefined" && checkoutUrl) {
+          window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+        }
       } catch (error) {
         console.error(error);
         setStatus({
@@ -255,13 +251,13 @@ export default function Home() {
           message:
             error instanceof Error
               ? error.message
-              : "Unable to reach Telebirr right now.",
+              : "Unable to reach Chapa right now.",
         });
       } finally {
         setIsProcessing(false);
       }
     },
-    [amount, card, writeBalanceToCard],
+    [card, writeBalanceToCard, TOP_UP_AMOUNT],
   );
 
   return (
@@ -274,11 +270,11 @@ export default function Home() {
                 ELPA pilot
               </p>
               <h1 className="text-2xl font-semibold text-[#2C2E7B]">
-                NFC balance & Telebirr refill
+                NFC balance & Chapa refill
               </h1>
               <p className="text-sm text-[#595959]">
-                Step 1 read card · Step 2 pay with Telebirr · Step 3 write
-                balance back.
+                Step 1 read card · Step 2 pay 1 ETB via Chapa · Step 3 auto write
+                the new balance.
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -377,33 +373,19 @@ export default function Home() {
         </section>
 
         <section className="rounded-3xl border border-[#2C2E7B]/10 bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.05)]">
-          <form className="space-y-4" onSubmit={handleTelebirrRefill}>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#2C2E7B]">
-                  Refill amount (ETB)
-                </p>
-                <input
-                  type="number"
-                  min={5}
-                  step={5}
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-[#2C2E7B]/15 bg-[#F8F9FB] px-4 py-3 text-2xl font-semibold text-[#2C2E7B] outline-none focus:border-[#F5AD00]"
-                />
-              </div>
-              <div className="flex-1 rounded-2xl border border-[#007FA3]/10 bg-[#E4F4F9] px-4 py-3 text-sm text-[#00516E]">
-                <p className="font-semibold text-[#007FA3]">Telebirr hand-off</p>
-                <p className="text-xs">
-                  Phone opens Telebirr checkout, ELPA gets instant confirmation,
-                  then the card is updated immediately.
-                </p>
-              </div>
+          <form className="space-y-4" onSubmit={handleChapaRefill}>
+            <div className="rounded-2xl border border-[#007FA3]/10 bg-[#E4F4F9] px-4 py-4 text-sm text-[#00516E]">
+              <p className="font-semibold text-[#007FA3]">Chapa checkout</p>
+              <p className="mt-1">
+                Every tap charges exactly {formatETB(TOP_UP_AMOUNT)}. Checkout
+                opens in a new tab and this demo immediately pushes the extra 1
+                ETB onto the card.
+              </p>
             </div>
 
-            {telebirrReference && (
+            {paymentReference && (
               <div className="rounded-2xl border border-[#F5AD00]/30 bg-[#FFF6E1] px-4 py-3 text-xs text-[#7C4A00]">
-                Telebirr ref: {telebirrReference}
+                Chapa ref: {paymentReference}
               </div>
             )}
 
@@ -412,7 +394,7 @@ export default function Home() {
               disabled={isProcessing || isWriting}
               className="w-full rounded-2xl bg-[#2C2E7B] py-4 text-lg font-semibold text-white transition hover:bg-[#1e2060] disabled:cursor-not-allowed disabled:bg-[#2C2E7B]/50"
             >
-              {isProcessing ? "Processing…" : "Refill with Telebirr"}
+              {isProcessing ? "Connecting to Chapa…" : "Pay 1 ETB with Chapa"}
             </button>
           </form>
         </section>

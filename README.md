@@ -2,23 +2,31 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Create a `.env.local` in the project root and add your Chapa secret key:
+
+```bash
+CHAPA_SECRET_KEY=live_or_test_secret_here
+```
+
+3. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with Chrome on an NFC-capable Android device to demo the end-to-end flow. The landing page lives in `src/app/page.tsx`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Reads and writes NFC cards using the Web NFC API (Android Chrome only).
+- Initializes 1 ETB payments through Chapa and preloads the new balance once the checkout opens.
+- Mobile-first UI inspired by the Post Office customer portal branding.
 
 ## Learn More
 

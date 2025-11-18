@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ELPA Smart Refill",
   description:
-    "Mobile-first web app prototype for reading and refilling ELPA NFC cards via Telebirr.",
+    "Mobile-first web app prototype for reading and refilling ELPA NFC cards via Chapa and Web NFC.",
 };
 
 export default function RootLayout({
