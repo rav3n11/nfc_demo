@@ -50,16 +50,33 @@ export async function POST(request: Request) {
     const chapaPayload = await chapaResponse.json();
 
     if (!chapaResponse.ok) {
+      console.error("Chapa API error:", chapaPayload);
       return NextResponse.json(
         {
-          error: chapaPayload?.message ?? "Unable to initialize Chapa payment.",
+          error: chapaPayload?.message ?? chapaPayload?.error ?? "Unable to initialize Chapa payment.",
         },
         { status: chapaResponse.status },
       );
     }
 
+    const checkoutUrl =
+      chapaPayload?.data?.checkout_url ??
+      chapaPayload?.checkout_url ??
+      chapaPayload?.data?.checkoutUrl ??
+      null;
+
+    if (!checkoutUrl) {
+      console.error("Chapa response missing checkout_url:", chapaPayload);
+      return NextResponse.json(
+        {
+          error: "Chapa did not return a checkout URL. Check server logs.",
+        },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json({
-      checkoutUrl: chapaPayload?.data?.checkout_url ?? null,
+      checkoutUrl,
       txRef,
     });
   } catch (error) {

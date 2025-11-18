@@ -86,6 +86,7 @@ export default function Home() {
   const [amount, setAmount] = useState("50");
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [needsReset, setNeedsReset] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const MAX_AMOUNT = 10000;
 
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
@@ -294,9 +295,10 @@ export default function Home() {
       try {
         setIsProcessing(true);
         setPaymentReference(null);
+        setDebugInfo(null);
         setStatus({
           tone: "info",
-          message: "Redirecting to Chapa checkout…",
+          message: "Connecting to Chapa…",
         });
 
         if (typeof window !== "undefined") {
@@ -310,6 +312,7 @@ export default function Home() {
           );
         }
 
+        setDebugInfo("Sending request to /api/chapa...");
         const response = await fetch("/api/chapa", {
           method: "POST",
           headers: {
@@ -321,26 +324,39 @@ export default function Home() {
           }),
         });
 
+        setDebugInfo(`Response status: ${response.status}`);
         const payload = await response.json();
+        
         if (!response.ok) {
-          throw new Error(payload.error ?? "Chapa payment failed.");
+          const errorMsg = payload.error ?? "Chapa payment failed.";
+          setDebugInfo(`Error: ${errorMsg} | Full response: ${JSON.stringify(payload)}`);
+          throw new Error(errorMsg);
         }
 
         const checkoutUrl: string | undefined =
           payload.checkoutUrl ?? payload.data?.checkout_url;
+        
+        setDebugInfo(`Got checkout URL: ${checkoutUrl ? "Yes" : "No"} | Response: ${JSON.stringify(payload).substring(0, 200)}`);
+        
         if (typeof window !== "undefined" && checkoutUrl) {
-          window.location.href = checkoutUrl;
+          setStatus({
+            tone: "info",
+            message: "Redirecting to Chapa now…",
+          });
+          setDebugInfo(`Redirecting to: ${checkoutUrl}`);
+          setTimeout(() => {
+            window.location.href = checkoutUrl;
+          }, 500);
         } else {
-          throw new Error("Chapa did not return a checkout URL.");
+          const errorMsg = payload.error ?? "Chapa did not return a checkout URL.";
+          setDebugInfo(`No checkout URL. Response: ${JSON.stringify(payload)}`);
+          throw new Error(errorMsg);
         }
       } catch (error) {
-        console.error(error);
+        const errorMsg = error instanceof Error ? error.message : "Unknown error occurred.";
         setStatus({
           tone: "alert",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Unable to reach Chapa right now.",
+          message: errorMsg,
         });
         setIsProcessing(false);
       }
@@ -482,6 +498,13 @@ export default function Home() {
             {paymentReference && (
               <div className="rounded-2xl border border-[#F5AD00]/30 bg-[#FFF6E1] px-4 py-3 text-xs text-[#7C4A00]">
                 Chapa ref: {paymentReference}
+              </div>
+            )}
+
+            {debugInfo && (
+              <div className="rounded-2xl border border-[#007FA3]/30 bg-[#E4F4F9] px-4 py-3 text-xs text-[#00516E] break-words">
+                <p className="font-semibold mb-1">Debug info:</p>
+                <p className="font-mono text-[10px]">{debugInfo}</p>
               </div>
             )}
 
