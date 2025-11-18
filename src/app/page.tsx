@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 type CardSnapshot = {
   balance: number;
@@ -81,12 +82,18 @@ const extractBalance = (message: NDEFMessagePayload): number | null => {
   return null;
 };
 
-export default function Home() {
+function HomeContent() {
   const [card, setCard] = useState<CardSnapshot | null>(null);
   const [amount, setAmount] = useState("50");
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [needsReset, setNeedsReset] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [pendingPayment, setPendingPayment] = useState<{
+    userAmount: number;
+    txRef: string;
+    cardSerial: string;
+  } | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const MAX_AMOUNT = 10000;
 
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
@@ -129,81 +136,70 @@ export default function Home() {
     [nfcSupported],
   );
 
-  useEffect(() => {
-    const handlePendingPayment = async () => {
-      if (typeof window === "undefined") return;
+  const searchParams = useSearchParams();
 
-      const stored = localStorage.getItem("chapa_payment_result");
-      const storedCard = localStorage.getItem("chapa_pending_card");
-      if (!stored || !storedCard) return;
+  useEffect(() => {
+    const verifyPaymentFromUrl = async () => {
+      const txRef = searchParams.get("tx_ref");
+      if (!txRef) return;
+
+      setIsVerifying(true);
+      setStatus({
+        tone: "info",
+        message: "Verifying payment with Chapa…",
+      });
 
       try {
-        const paymentResult = JSON.parse(stored);
-        const cardInfo = JSON.parse(storedCard);
+        const response = await fetch(`/api/chapa/verify?tx_ref=${txRef}`);
+        const payload = await response.json();
 
-        if (Date.now() - paymentResult.timestamp > 5 * 60 * 1000) {
-          localStorage.removeItem("chapa_payment_result");
-          localStorage.removeItem("chapa_pending_card");
-          return;
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Payment verification failed.");
         }
 
-        if (paymentResult.status === "success") {
-          const userAmount = paymentResult.userAmount ?? cardInfo.userAmount ?? 50;
-          const startingBalance = card?.balance ?? cardInfo.balance ?? 0;
-          const updatedBalance = Number(
-            (startingBalance + userAmount).toFixed(2),
-          );
-
-          if (!card) {
-            setStatus({
-              tone: "info",
-              message: `Payment confirmed! Please read your card to update it with +${formatETB(userAmount)}.`,
+        if (payload.status === "success") {
+          const storedCard = localStorage.getItem("chapa_pending_card");
+          if (storedCard) {
+            const cardInfo = JSON.parse(storedCard);
+            setPendingPayment({
+              userAmount: payload.userAmount ?? cardInfo.userAmount ?? 50,
+              txRef: payload.txRef ?? txRef,
+              cardSerial: cardInfo.serialNumber,
             });
-            localStorage.removeItem("chapa_payment_result");
-            localStorage.removeItem("chapa_pending_card");
-            return;
-          }
-
-          if (card.serialNumber !== cardInfo.serialNumber) {
+            setStatus({
+              tone: "success",
+              message: `Payment confirmed! Read your card to apply +${formatETB(payload.userAmount ?? cardInfo.userAmount ?? 50)}.`,
+            });
+          } else {
             setStatus({
               tone: "alert",
-              message: "Card mismatch. Please read the same card you used for payment.",
+              message: "Payment confirmed but card info was lost. Please start over.",
             });
-            localStorage.removeItem("chapa_payment_result");
-            localStorage.removeItem("chapa_pending_card");
-            return;
           }
-
-          localStorage.removeItem("chapa_payment_result");
           localStorage.removeItem("chapa_pending_card");
-
+        } else {
           setStatus({
-            tone: "info",
-            message: `Payment confirmed! Updating card with +${formatETB(userAmount)}…`,
-          });
-
-          await writeBalanceToCard(updatedBalance);
-
-          setCard({
-            balance: updatedBalance,
-            serialNumber: card.serialNumber,
-            lastSynced: new Date().toISOString(),
-          });
-          setPaymentReference(paymentResult.txRef ?? null);
-          setStatus({
-            tone: "success",
-            message: `Card updated! Added ${formatETB(userAmount)} to your balance.`,
+            tone: "alert",
+            message: "Payment was not completed.",
           });
         }
       } catch (error) {
-        console.error("Failed to process pending payment", error);
-        localStorage.removeItem("chapa_payment_result");
-        localStorage.removeItem("chapa_pending_card");
+        console.error(error);
+        setStatus({
+          tone: "alert",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify payment.",
+        });
+      } finally {
+        setIsVerifying(false);
+        window.history.replaceState({}, "", "/");
       }
     };
 
-    handlePendingPayment();
-  }, [card, writeBalanceToCard]);
+    verifyPaymentFromUrl();
+  }, [searchParams]);
 
   const handleReadCard = useCallback(async () => {
     if (!nfcSupported || !window.NDEFReader) {
@@ -221,8 +217,10 @@ export default function Home() {
       });
 
       const ndef = new window.NDEFReader();
-      ndef.onreading = (event: NDEFReadingEvent) => {
+      ndef.onreading = async (event: NDEFReadingEvent) => {
         const balanceFromCard = extractBalance(event.message);
+        const cardSerial = event.serialNumber ?? "Unknown card";
+        
         if (balanceFromCard === null) {
           setNeedsReset(true);
           setStatus({
@@ -230,18 +228,53 @@ export default function Home() {
             message:
               "Card detected but no balance was found. Tap “Reset to 0 ETB” to initialize.",
           });
-        } else {
-          setNeedsReset(false);
-          setCard({
-            balance: balanceFromCard,
-            serialNumber: event.serialNumber ?? "Unknown card",
-            lastSynced: new Date().toISOString(),
+          setIsReading(false);
+          return;
+        }
+
+        setNeedsReset(false);
+        const newCard = {
+          balance: balanceFromCard,
+          serialNumber: cardSerial,
+          lastSynced: new Date().toISOString(),
+        };
+        setCard(newCard);
+        
+        if (pendingPayment && pendingPayment.cardSerial === cardSerial) {
+          setStatus({
+            tone: "info",
+            message: `Applying payment of +${formatETB(pendingPayment.userAmount)} to card…`,
           });
+          
+          const updatedBalance = Number(
+            (balanceFromCard + pendingPayment.userAmount).toFixed(2),
+          );
+          
+          try {
+            await writeBalanceToCard(updatedBalance);
+            setCard({
+              ...newCard,
+              balance: updatedBalance,
+            });
+            setPaymentReference(pendingPayment.txRef);
+            setPendingPayment(null);
+            setStatus({
+              tone: "success",
+              message: `Card updated! Added ${formatETB(pendingPayment.userAmount)}. New balance: ${formatETB(updatedBalance)}.`,
+            });
+          } catch (error) {
+            setStatus({
+              tone: "alert",
+              message: "Failed to write to card. Please try again.",
+            });
+          }
+        } else {
           setStatus({
             tone: "success",
             message: "Balance pulled directly from the card.",
           });
         }
+        
         setIsReading(false);
       };
 
@@ -265,7 +298,7 @@ export default function Home() {
       });
       setIsReading(false);
     }
-  }, [nfcSupported]);
+  }, [nfcSupported, pendingPayment, writeBalanceToCard]);
 
   const handleChapaRefill = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -426,6 +459,21 @@ export default function Home() {
             </div>
           </div>
 
+          {isVerifying && (
+            <div className="mt-4 rounded-2xl border border-[#007FA3]/30 bg-[#E4F4F9] px-4 py-3 text-sm text-[#00516E]">
+              Verifying payment with Chapa…
+            </div>
+          )}
+
+          {pendingPayment && (
+            <div className="mt-4 rounded-2xl border border-[#F5AD00]/40 bg-[#FFF6E1] px-4 py-3 text-sm text-[#7C4A00]">
+              <p className="font-semibold">Payment confirmed!</p>
+              <p className="text-xs mt-1">
+                Ready to add {formatETB(pendingPayment.userAmount)}. Read your card to apply.
+              </p>
+            </div>
+          )}
+
           <div
             className={`mt-4 rounded-2xl px-4 py-3 text-sm ${
               status.tone === "success"
@@ -519,5 +567,21 @@ export default function Home() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FDF9F0] px-4 py-10 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-[#2C2E7B]">Loading…</p>
+          </div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

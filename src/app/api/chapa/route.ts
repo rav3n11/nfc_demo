@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       currency: "ETB",
       // phone_number: "+251911000000",
       tx_ref: txRef,
-      return_url: `${origin}/chapa/return?tx_ref=${txRef}`,
+      return_url: `${origin}/?tx_ref=${txRef}`,
       callback_url: `${origin}/api/chapa/callback`,
       meta: {
         cardSerial: cardSerial ?? "UNKNOWN",
