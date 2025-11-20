@@ -768,7 +768,7 @@ function HomeContent() {
         <div class="section-title">Post Box Code</div>
         <div class="card-code">
           <div class="card-code-label">Card Code</div>
-          <div class="card-code-value">${card.serialNumber.slice(0, 6)}</div>
+          <div class="card-code-value">${card.serialNumber}</div>
         </div>
       </div>
 
@@ -1263,8 +1263,8 @@ function HomeContent() {
                     <p className="text-xs uppercase tracking-[0.3em] text-[#8a94b4] mb-2">
                       Card Code
                     </p>
-                    <p className="text-xl sm:text-2xl font-semibold text-[#2C2E7B] mb-2">
-                      {card?.serialNumber?.slice(0, 6) ?? "------"}
+                    <p className="text-xl sm:text-2xl font-semibold text-[#2C2E7B] mb-2 break-all">
+                      {card?.serialNumber ?? "------"}
                     </p>
                     <p className="text-xs text-[#8a94b4]">Thank you!</p>
                   </div>
