@@ -1005,33 +1005,47 @@ function HomeContent() {
                 {card ? (
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-3xl sm:text-4xl font-bold text-[#2C2E7B]">
-                        {formatETB(card.balance)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src="/birr-logo-blue.svg"
+                          alt="ETB"
+                          width={32}
+                          height={35}
+                          className="h-8 sm:h-10 w-auto"
+                        />
+                        <span className="text-3xl sm:text-4xl font-bold text-[#2C2E7B]">
+                          {card.balance}
+                        </span>
+                      </div>
                       <p className="text-xs sm:text-sm text-[#8a94b4] mt-1">
                         Card: {card.serialNumber.slice(0, 8)}...
                       </p>
                     </div>
-                    <button
-                      onClick={handleReadCard}
-                      disabled={isReading}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Refresh balance"
-                    >
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={isReading ? "animate-spin" : ""}
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        onClick={handleReadCard}
+                        disabled={isReading}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Refresh balance"
                       >
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                      </svg>
-                    </button>
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={isReading ? "animate-spin" : ""}
+                        >
+                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                        </svg>
+                      </button>
+                      <p className="text-[9px] sm:text-[10px] text-[#8a94b4] text-right max-w-[80px] sm:max-w-[100px] leading-tight">
+                        Click & hold card near back of phone until vibration
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -1043,26 +1057,31 @@ function HomeContent() {
                         Tap a card to view balance
                       </p>
                     </div>
-                    <button
-                      onClick={handleReadCard}
-                      disabled={isReading}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Read card"
-                    >
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={isReading ? "animate-spin" : ""}
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        onClick={handleReadCard}
+                        disabled={isReading}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Read card"
                       >
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                      </svg>
-                    </button>
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={isReading ? "animate-spin" : ""}
+                        >
+                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                        </svg>
+                      </button>
+                      <p className="text-[9px] sm:text-[10px] text-[#8a94b4] text-right max-w-[80px] sm:max-w-[100px] leading-tight">
+                        Click & hold card near back of phone until vibration
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1139,19 +1158,13 @@ function HomeContent() {
                 </h3>
                 <div className="mb-4 rounded-2xl border-2 border-dashed border-[#F5AD00]/40 bg-[#FFF6E1] px-4 py-6 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <svg
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#F5AD00"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="animate-bounce"
-                    >
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
+                    <Image
+                      src="/birr-logo-blue.svg"
+                      alt="ETB"
+                      width={48}
+                      height={52}
+                      className="h-12 w-auto animate-bounce"
+                    />
                     <div>
                       <p className="text-sm font-semibold text-[#2C2E7B] mb-1">
                         Scan your card at the top
