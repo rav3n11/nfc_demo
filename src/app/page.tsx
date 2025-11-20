@@ -1021,31 +1021,26 @@ function HomeContent() {
                         Card: {card.serialNumber.slice(0, 8)}...
                       </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <button
-                        onClick={handleReadCard}
-                        disabled={isReading}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label="Refresh balance"
+                    <button
+                      onClick={handleReadCard}
+                      disabled={isReading}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Refresh balance"
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={isReading ? "animate-spin" : ""}
                       >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className={isReading ? "animate-spin" : ""}
-                        >
-                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                        </svg>
-                      </button>
-                      <p className="text-[9px] sm:text-[10px] text-[#8a94b4] text-right max-w-[80px] sm:max-w-[100px] leading-tight">
-                        Click & hold card near back of phone until vibration
-                      </p>
-                    </div>
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                      </svg>
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -1057,33 +1052,33 @@ function HomeContent() {
                         Tap a card to view balance
                       </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <button
-                        onClick={handleReadCard}
-                        disabled={isReading}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label="Read card"
+                    <button
+                      onClick={handleReadCard}
+                      disabled={isReading}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Read card"
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={isReading ? "animate-spin" : ""}
                       >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className={isReading ? "animate-spin" : ""}
-                        >
-                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                        </svg>
-                      </button>
-                      <p className="text-[9px] sm:text-[10px] text-[#8a94b4] text-right max-w-[80px] sm:max-w-[100px] leading-tight">
-                        Click & hold card near back of phone until vibration
-                      </p>
-                    </div>
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                      </svg>
+                    </button>
                   </div>
                 )}
+                <div className="mt-3 pt-3 border-t border-[#e4e6f3]">
+                  <p className="text-[10px] sm:text-xs text-[#8a94b4] text-center leading-tight">
+                    Click refresh button & hold card near back of phone until vibration
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -1280,7 +1275,7 @@ function HomeContent() {
                 <div className="mb-4 space-y-3">
                   <div className="relative rounded-xl sm:rounded-2xl border border-[#f1f2f8] bg-[#fdfaf3] p-3 sm:p-4">
                     <div className="absolute top-3 right-3 flex flex-col items-center gap-1 opacity-80 -rotate-[30deg] pointer-events-none">
-                      <Image
+            <Image
                         src="/elpa-blue.svg"
                         alt="Ethiopian Electric Utility"
                         width={60}
