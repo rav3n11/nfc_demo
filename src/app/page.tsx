@@ -515,6 +515,291 @@ function HomeContent() {
     window.location.href = "https://app.vps.gebeta.app";
   };
 
+  const downloadReceipt = () => {
+    if (!receipt || !card) return;
+
+    const receiptHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Receipt - ${receipt.txRef}</title>
+  <style>
+    @media print {
+      @page {
+        margin: 0;
+        size: A4;
+      }
+      body {
+        margin: 0;
+      }
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: white;
+      color: #1f2a44;
+      padding: 20px;
+    }
+    .receipt-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+    }
+    .header {
+      background: #2C2E7B;
+      color: white;
+      padding: 30px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-left h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .header-left h2 {
+      font-size: 18px;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .logo {
+      height: 60px;
+      width: auto;
+    }
+    .content {
+      padding: 40px;
+      background: white;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2C2E7B;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 12px 20px;
+      font-size: 14px;
+    }
+    .info-label {
+      color: #8a94b4;
+      font-weight: 500;
+    }
+    .info-value {
+      color: #2C2E7B;
+      font-weight: 400;
+    }
+    .card-code {
+      background: #f5f6fb;
+      border: 1px solid #e4e6f3;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .card-code-label {
+      font-size: 12px;
+      color: #8a94b4;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .card-code-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #2C2E7B;
+      font-family: monospace;
+    }
+    .financial-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .financial-left, .financial-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .financial-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      padding-bottom: 8px;
+    }
+    .financial-label {
+      color: #2C2E7B;
+    }
+    .financial-value {
+      color: #2C2E7B;
+      font-weight: 500;
+    }
+    .financial-total {
+      border-top: 2px dashed #dfe2f1;
+      padding-top: 12px;
+      margin-top: 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .financial-total .financial-value {
+      color: #388e3c;
+      font-size: 20px;
+    }
+    .transaction-section {
+      background: #fdfaf3;
+      border: 1px solid #f1f2f8;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .transaction-item {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .transaction-item:last-child {
+      margin-bottom: 0;
+    }
+    .transaction-label {
+      color: #8a94b4;
+      font-weight: 500;
+    }
+    .transaction-value {
+      color: #2C2E7B;
+      font-weight: 400;
+    }
+    .payment-method {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f2f8;
+      text-align: center;
+      font-size: 14px;
+      color: #6c7899;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid #e4e6f3;
+      text-align: center;
+      font-size: 12px;
+      color: #8a94b4;
+    }
+  </style>
+</head>
+<body>
+  <div class="receipt-container">
+    <div class="header">
+      <div class="header-left">
+        <h1>Electric Bill Recharge</h1>
+        <h2>Receipt</h2>
+      </div>
+      <div class="header-right">
+        <img src="${window.location.origin}/elpa.svg" alt="ELPA" class="logo" />
+        <img src="${window.location.origin}/ethiopost-logo.svg" alt="Ethiopost" class="logo" />
+      </div>
+    </div>
+    
+    <div class="content">
+      <div class="section">
+        <div class="section-title">Post Box Code</div>
+        <div class="card-code">
+          <div class="card-code-label">Card Code</div>
+          <div class="card-code-value">${card.serialNumber.slice(0, 6)}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Financial Breakdown</div>
+        <div class="financial-section">
+          <div class="financial-left">
+            <div class="financial-item">
+              <span class="financial-label">Base price</span>
+              <span class="financial-value">${receipt.amount.toFixed(2)} ETB</span>
+            </div>
+            <div class="financial-item">
+              <span class="financial-label">Subtotal</span>
+              <span class="financial-value">${receipt.amount.toFixed(2)} ETB</span>
+            </div>
+          </div>
+          <div class="financial-right">
+            <div class="financial-item">
+              <span class="financial-label">VAT</span>
+              <span class="financial-value">15.00 %</span>
+            </div>
+            <div class="financial-item">
+              <span class="financial-label">Chapa Service Fee</span>
+              <span class="financial-value">1.50 %</span>
+            </div>
+            <div class="financial-item financial-total">
+              <span class="financial-label">Total</span>
+              <span class="financial-value">${receipt.total.toFixed(2)} ETB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Transaction</div>
+        <div class="transaction-section">
+          <div class="transaction-item">
+            <span class="transaction-label">Reason: </span>
+            <span class="transaction-value">${receipt.reason}</span>
+          </div>
+          <div class="transaction-item">
+            <span class="transaction-label">Sale: </span>
+            <span class="transaction-value">${receipt.txRef}</span>
+          </div>
+          <div class="transaction-item">
+            <span class="transaction-label">Initiated at: </span>
+            <span class="transaction-value">${receipt.initiatedAt}</span>
+          </div>
+          <div class="transaction-item">
+            <span class="transaction-label">Finalized at: </span>
+            <span class="transaction-value">${receipt.finalizedAt}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="payment-method">
+        ${receipt.total.toFixed(2)} ETB through CHAPA PAID
+      </div>
+
+      <div class="footer">
+        <p>Thank you for using Ethiopost!</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      printWindow.focus();
+      // Wait for images to load, then print
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-[#f5f6fb] text-[#1f2a44]">
       {showConfetti && (
@@ -901,12 +1186,20 @@ function HomeContent() {
                   </div>
                 </div>
                 
-                <button
-                  onClick={resetToHome}
-                  className="w-full rounded-xl sm:rounded-2xl bg-[#2C2E7B] py-3 sm:py-4 text-base sm:text-lg font-semibold text-white transition hover:bg-[#1e2060]"
-                >
-                  Back to Home
-                </button>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={downloadReceipt}
+                    className="flex-1 rounded-xl sm:rounded-2xl border-2 border-[#2C2E7B] bg-white py-3 sm:py-4 text-base sm:text-lg font-semibold text-[#2C2E7B] transition hover:bg-[#f5f6fb]"
+                  >
+                    Download
+                  </button>
+                  <button
+                    onClick={resetToHome}
+                    className="flex-1 rounded-xl sm:rounded-2xl bg-[#2C2E7B] py-3 sm:py-4 text-base sm:text-lg font-semibold text-white transition hover:bg-[#1e2060]"
+                  >
+                    Back to Home
+                  </button>
+                </div>
               </div>
             )}
         </div>
