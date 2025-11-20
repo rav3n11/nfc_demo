@@ -1251,22 +1251,27 @@ function HomeContent() {
             {/* Step 4: Receipt */}
             {receipt && (
               <>
-                <div className="rounded-2xl sm:rounded-3xl border border-[#4CAF50]/40 bg-[#E8F5E9] p-4 sm:p-6 mb-4">
-                  <div className="flex items-center gap-3">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#4CAF50"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    <p className="text-base sm:text-lg font-semibold text-[#2E7D32]">
+                <div className="rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 mb-4 shadow-[0_20px_60px_rgba(44,46,123,0.08)]">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#81C784] flex items-center justify-center mb-4 sm:mb-6 shadow-[0_8px_32px_rgba(76,175,80,0.3)] flex-shrink-0">
+                      <svg
+                        width="40"
+                        height="40"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="sm:w-12 sm:h-12"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <h4 className="text-xl sm:text-2xl font-bold text-[#4CAF50] mb-2 sm:mb-3">
+                      Congratulations!
+                    </h4>
+                    <p className="text-base sm:text-lg font-semibold text-[#2C2E7B] mb-2">
                       Card refilled successfully!
                     </p>
                   </div>
