@@ -761,7 +761,7 @@ function HomeContent() {
       pointer-events: none;
     }
     .stamp-logo {
-      height: 60px;
+      height: 90px;
       width: auto;
     }
     .stamp-label {
