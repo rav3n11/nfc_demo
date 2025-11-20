@@ -123,7 +123,6 @@ function HomeContent() {
   const [amount, setAmount] = useState("50");
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [needsReset, setNeedsReset] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
@@ -454,7 +453,6 @@ function HomeContent() {
       try {
         setIsProcessing(true);
         setPaymentReference(null);
-        setDebugInfo(null);
         setStatus({
           tone: "info",
           message: "Connecting to Chapa…",
@@ -471,7 +469,6 @@ function HomeContent() {
           );
         }
 
-        setDebugInfo("Sending request to /api/chapa...");
         const response = await fetch("/api/chapa", {
           method: "POST",
           headers: {
@@ -483,32 +480,26 @@ function HomeContent() {
           }),
         });
 
-        setDebugInfo(`Response status: ${response.status}`);
         const payload = await response.json();
         
         if (!response.ok) {
           const errorMsg = payload.error ?? "Chapa payment failed.";
-          setDebugInfo(`Error: ${errorMsg} | Full response: ${JSON.stringify(payload)}`);
           throw new Error(errorMsg);
         }
 
         const checkoutUrl: string | undefined =
           payload.checkoutUrl ?? payload.data?.checkout_url;
         
-        setDebugInfo(`Got checkout URL: ${checkoutUrl ? "Yes" : "No"} | Response: ${JSON.stringify(payload).substring(0, 200)}`);
-        
         if (typeof window !== "undefined" && checkoutUrl) {
           setStatus({
             tone: "info",
             message: "Redirecting to Chapa now…",
           });
-          setDebugInfo(`Redirecting to: ${checkoutUrl}`);
           setTimeout(() => {
             window.location.href = checkoutUrl;
           }, 500);
         } else {
           const errorMsg = payload.error ?? "Chapa did not return a checkout URL.";
-          setDebugInfo(`No checkout URL. Response: ${JSON.stringify(payload)}`);
           throw new Error(errorMsg);
         }
       } catch (error) {
@@ -1207,13 +1198,6 @@ function HomeContent() {
                     </p>
                   </div>
 
-                  {debugInfo && (
-                    <div className="rounded-2xl border border-[#007FA3]/30 bg-[#E4F4F9] px-4 py-3 text-xs text-[#00516E] break-words">
-                      <p className="mb-1 font-semibold">Debug info:</p>
-                      <p className="font-mono text-[10px]">{debugInfo}</p>
-                    </div>
-                  )}
-
                   <button
                     type="submit"
                     disabled={isProcessing || isWriting}
@@ -1266,22 +1250,34 @@ function HomeContent() {
 
             {/* Step 4: Receipt */}
             {receipt && (
-              <div className="rounded-2xl sm:rounded-3xl border border-[#e1e3f0] bg-white p-4 sm:p-6 shadow-[0_20px_50px_rgba(31,42,68,0.08)]">
-                <h3 className="mb-4 text-lg sm:text-xl font-semibold text-[#2C2E7B]">
-                  Payment Receipt
-                </h3>
+              <>
+                <div className="rounded-2xl sm:rounded-3xl border border-[#4CAF50]/40 bg-[#E8F5E9] p-4 sm:p-6 mb-4">
+                  <div className="flex items-center gap-3">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#4CAF50"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <p className="text-base sm:text-lg font-semibold text-[#2E7D32]">
+                      Card refilled successfully!
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-2xl sm:rounded-3xl border border-[#e1e3f0] bg-white p-4 sm:p-6 shadow-[0_20px_50px_rgba(31,42,68,0.08)]">
+                  <h3 className="mb-4 text-lg sm:text-xl font-semibold text-[#2C2E7B]">
+                    Payment Receipt
+                  </h3>
                 
                 <div className="mb-4 space-y-3">
                   <div className="relative rounded-xl sm:rounded-2xl border border-[#f1f2f8] bg-[#fdfaf3] p-3 sm:p-4">
-                    <div className="absolute top-3 right-3 flex flex-col items-center gap-1 opacity-80 -rotate-[30deg] pointer-events-none">
-            <Image
-                        src="/elpa-blue.svg"
-                        alt="Ethiopian Electric Utility"
-                        width={60}
-                        height={46}
-                        className="h-12 sm:h-14 w-auto"
-                      />
-                    </div>
                     <p className="text-xs uppercase tracking-[0.2em] text-[#8a94b4] mb-2">
                       Transaction
                     </p>
@@ -1330,7 +1326,7 @@ function HomeContent() {
                     onClick={downloadReceipt}
                     className="flex-1 rounded-xl sm:rounded-2xl border-2 border-[#2C2E7B] bg-white py-3 sm:py-4 text-base sm:text-lg font-semibold text-[#2C2E7B] transition hover:bg-[#f5f6fb]"
                   >
-                    Download
+                    Download Receipt
                   </button>
                   <button
                     onClick={resetToHome}
@@ -1340,6 +1336,7 @@ function HomeContent() {
                   </button>
                 </div>
               </div>
+              </>
             )}
         </div>
       </main>
