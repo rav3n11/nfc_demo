@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         userAmount: String(userAmount ?? 50),
       },
       customization: {
-        title: "Electric Bill Recharge",
+        title: "Bill Recharge",
         description: "NFC top-up demo via Chapa",
       },
     };

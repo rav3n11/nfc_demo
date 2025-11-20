@@ -627,11 +627,26 @@ function HomeContent() {
                         Card: {card.serialNumber.slice(0, 8)}...
                       </p>
                     </div>
-                    <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00]/20 flex items-center justify-center">
-                      <span className="text-lg sm:text-xl font-bold text-[#F5AD00]">
-                        {card.serialNumber.slice(0, 2).toUpperCase()}
-                      </span>
-                    </div>
+                    <button
+                      onClick={handleReadCard}
+                      disabled={isReading}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Refresh balance"
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={isReading ? "animate-spin" : ""}
+                      >
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                      </svg>
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
