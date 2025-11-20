@@ -379,9 +379,9 @@ function HomeContent() {
             const receiptData: ReceiptData = {
               txRef: currentPendingPayment.txRef,
               amount: currentPendingPayment.userAmount,
-              vat: 0,
+              vat: Number((currentPendingPayment.userAmount * 0.15).toFixed(2)),
               serviceFee: Number((currentPendingPayment.userAmount * 0.065).toFixed(2)),
-              total: Number((currentPendingPayment.userAmount * 1.065).toFixed(2)),
+              total: Number((currentPendingPayment.userAmount * 1.215).toFixed(2)),
               branchName: "",
               branchCode: "",
               customerName: "",
@@ -829,6 +829,10 @@ function HomeContent() {
             </div>
           </div>
           <div class="financial-right">
+            <div class="financial-item">
+              <span class="financial-label">VAT</span>
+              <span class="financial-value">15.00 %</span>
+            </div>
             <div class="financial-item">
               <span class="financial-label">Service Fee</span>
               <span class="financial-value">6.50 %</span>
@@ -1304,6 +1308,10 @@ function HomeContent() {
                     <div className="flex items-center justify-between text-sm text-[#2C2E7B] mb-2">
                       <p>Amount</p>
                       <p className="font-semibold">{formatETB(receipt.amount)}</p>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-[#2C2E7B] mb-2">
+                      <p>VAT (15%)</p>
+                      <p>{formatETB(receipt.vat)}</p>
                     </div>
                     <div className="flex items-center justify-between text-sm text-[#2C2E7B] mb-2">
                       <p>Service fee (6.5%)</p>
