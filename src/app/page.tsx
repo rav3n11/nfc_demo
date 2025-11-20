@@ -769,7 +769,7 @@ function HomeContent() {
       flex-direction: column;
       align-items: center;
       gap: 4px;
-      opacity: 0.8;
+      opacity: 0.65;
       transform: rotate(-30deg);
       pointer-events: none;
     }
