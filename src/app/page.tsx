@@ -567,7 +567,7 @@ function HomeContent() {
   }, [card, pendingPayment, receipt]);
 
   const handleBack = () => {
-    window.location.href = "https://app.vps.gebeta.app";
+    window.location.href = "https://app.vps.gebeta.app/dashboard";
   };
 
   const downloadReceipt = () => {
