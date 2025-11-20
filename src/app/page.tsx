@@ -544,7 +544,7 @@ function HomeContent() {
         isCurrent: card === null && !pendingPayment,
       },
       {
-        title: "Fill amount",
+        title: "Amount",
         isCompleted: pendingPayment !== null || receipt !== null,
         isCurrent: card !== null && !pendingPayment && !receipt,
       },
