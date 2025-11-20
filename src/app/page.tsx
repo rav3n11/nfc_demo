@@ -842,7 +842,6 @@ function HomeContent() {
         <div class="transaction-section">
           <div class="stamp">
             <img src="${window.location.origin}/elpa-blue.svg" alt="Ethiopian Electric Utility" class="stamp-logo" />
-            <div class="stamp-label">Ethiopian Electric Utility</div>
           </div>
           <div class="transaction-item">
             <span class="transaction-label">Reason: </span>
@@ -1282,9 +1281,6 @@ function HomeContent() {
                         height={46}
                         className="h-12 sm:h-14 w-auto"
                       />
-                      <p className="text-[9px] uppercase tracking-wider text-[#8a94b4]">
-                        Ethiopian Electric Utility
-                      </p>
                     </div>
                     <p className="text-xs uppercase tracking-[0.2em] text-[#8a94b4] mb-2">
                       Transaction
