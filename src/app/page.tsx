@@ -8,6 +8,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   Suspense,
 } from "react";
 import { useSearchParams } from "next/navigation";
@@ -130,6 +131,8 @@ function HomeContent() {
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [isLoadingState, setIsLoadingState] = useState(true);
   const MAX_AMOUNT = 10000;
+  // Ref to track if we're in an active payment flow (prevents applying payments after reset)
+  const isActivePaymentFlowRef = useRef(false);
 
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
     tone: "info",
@@ -153,6 +156,8 @@ function HomeContent() {
         // Only restore pendingPayment if there's no receipt (payment not completed)
         if (parsed.pendingPayment && !parsed.receipt) {
           setPendingPayment(parsed.pendingPayment);
+          // Mark payment flow as active if we have a pending payment
+          isActivePaymentFlowRef.current = true;
         }
         if (parsed.receipt) setReceipt(parsed.receipt);
         if (parsed.status) setStatus(parsed.status);
@@ -264,6 +269,8 @@ function HomeContent() {
               cardSerial: cardInfo.serialNumber,
               processedAt: payload.processedAt ?? new Date().toISOString(),
             });
+            // Mark payment flow as active when payment is verified
+            isActivePaymentFlowRef.current = true;
             setStatus({
               tone: "success",
               message: `Payment confirmed! Read your card to apply +${formatETB(payload.userAmount ?? cardInfo.userAmount ?? 50)}.`,
@@ -330,7 +337,7 @@ function HomeContent() {
           setStatus({
             tone: "alert",
             message:
-              "Card detected but no balance was found. Tap “Reset to 0 ETB” to initialize.",
+              "Card detected but no balance was found. Tap \"Reset to 0 ETB\" to initialize.",
           });
           setIsReading(false);
           return;
@@ -344,9 +351,11 @@ function HomeContent() {
         };
         setCard(newCard);
         
+        // Only apply pending payment if we're actively in the payment flow
+        // Check both the ref (current state) and receipt (to prevent applying after completion)
         const currentPendingPayment = pendingPayment;
-        // Only apply pending payment if we're actively in the payment flow (no receipt means payment not completed yet)
-        if (currentPendingPayment && currentPendingPayment.cardSerial === cardSerial && !receipt) {
+        const isActiveFlow = isActivePaymentFlowRef.current;
+        if (currentPendingPayment && currentPendingPayment.cardSerial === cardSerial && !receipt && isActiveFlow) {
           setPendingPayment(null);
           
           setStatus({
@@ -390,6 +399,8 @@ function HomeContent() {
             });
             // Clear localStorage when process completes successfully
             clearAppState();
+            // Mark payment flow as inactive
+            isActivePaymentFlowRef.current = false;
           } catch (error) {
             setPendingPayment(currentPendingPayment);
             setStatus({
@@ -427,7 +438,7 @@ function HomeContent() {
       });
       setIsReading(false);
     }
-  }, [nfcSupported, pendingPayment, writeBalanceToCard]);
+  }, [nfcSupported, pendingPayment, receipt, writeBalanceToCard]);
 
   const handleChapaRefill = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -533,6 +544,8 @@ function HomeContent() {
     setPaymentReference(null);
     setReceipt(null);
     setPendingPayment(null);
+    // Mark payment flow as inactive when resetting
+    isActivePaymentFlowRef.current = false;
     setStatus({
       tone: "info",
       message: "Android Chrome + NFC only. Start by reading your card to begin the refill process.",
@@ -1258,7 +1271,7 @@ function HomeContent() {
                 <div className="rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 mb-4 shadow-[0_20px_60px_rgba(44,46,123,0.08)]">
                   <div className="flex flex-col items-center text-center">
                     <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] mb-4 sm:mb-6 flex-shrink-0">
-                      <Image
+            <Image
                         src="/Success.svg"
                         alt="Success"
                         width={150}
