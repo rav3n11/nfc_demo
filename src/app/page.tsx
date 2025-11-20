@@ -1253,20 +1253,14 @@ function HomeContent() {
               <>
                 <div className="rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 mb-4 shadow-[0_20px_60px_rgba(44,46,123,0.08)]">
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#81C784] flex items-center justify-center mb-4 sm:mb-6 shadow-[0_8px_32px_rgba(76,175,80,0.3)] flex-shrink-0">
-                      <svg
-                        width="40"
-                        height="40"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="sm:w-12 sm:h-12"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
+                    <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] mb-4 sm:mb-6 flex-shrink-0">
+                      <Image
+                        src="/Success.svg"
+                        alt="Success"
+                        width={150}
+                        height={150}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
                     <h4 className="text-xl sm:text-2xl font-bold text-[#4CAF50] mb-2 sm:mb-3">
                       Congratulations!
