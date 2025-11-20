@@ -728,6 +728,7 @@ function HomeContent() {
       border-radius: 12px;
       padding: 20px;
       margin-top: 20px;
+      position: relative;
     }
     .transaction-item {
       margin-bottom: 8px;
@@ -752,28 +753,24 @@ function HomeContent() {
       font-size: 14px;
       color: #6c7899;
     }
-    .stamp-section {
-      margin-top: 30px;
-      padding-top: 30px;
-      border-top: 1px solid #e4e6f3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-    }
     .stamp {
+      position: absolute;
+      top: 20px;
+      right: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
+      opacity: 0.8;
+      transform: rotate(-30deg);
+      pointer-events: none;
     }
     .stamp-logo {
-      height: 80px;
+      height: 60px;
       width: auto;
-      opacity: 0.8;
     }
     .stamp-label {
-      font-size: 11px;
+      font-size: 9px;
       color: #8a94b4;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -843,6 +840,10 @@ function HomeContent() {
       <div class="section">
         <div class="section-title">Transaction</div>
         <div class="transaction-section">
+          <div class="stamp">
+            <img src="${window.location.origin}/elpa-blue.svg" alt="Ethiopian Electric Utility" class="stamp-logo" />
+            <div class="stamp-label">Ethiopian Electric Utility</div>
+          </div>
           <div class="transaction-item">
             <span class="transaction-label">Reason: </span>
             <span class="transaction-value">${receipt.reason}</span>
@@ -864,13 +865,6 @@ function HomeContent() {
 
       <div class="payment-method">
         ${receipt.total.toFixed(2)} ETB through CHAPA PAID
-      </div>
-
-      <div class="stamp-section">
-        <div class="stamp">
-          <img src="${window.location.origin}/elpa-blue.svg" alt="Ethiopian Electric Utility" class="stamp-logo" />
-          <div class="stamp-label">Ethiopian Electric Utility</div>
-        </div>
       </div>
 
       <div class="footer">
@@ -1271,7 +1265,19 @@ function HomeContent() {
                 </h3>
                 
                 <div className="mb-4 space-y-3">
-                  <div className="rounded-xl sm:rounded-2xl border border-[#f1f2f8] bg-[#fdfaf3] p-3 sm:p-4">
+                  <div className="relative rounded-xl sm:rounded-2xl border border-[#f1f2f8] bg-[#fdfaf3] p-3 sm:p-4">
+                    <div className="absolute top-3 right-3 flex flex-col items-center gap-1 opacity-80 -rotate-[30deg] pointer-events-none">
+                      <Image
+                        src="/elpa-blue.svg"
+                        alt="Ethiopian Electric Utility"
+                        width={60}
+                        height={46}
+                        className="h-12 sm:h-14 w-auto"
+                      />
+                      <p className="text-[9px] uppercase tracking-wider text-[#8a94b4]">
+                        Ethiopian Electric Utility
+                      </p>
+                    </div>
                     <p className="text-xs uppercase tracking-[0.2em] text-[#8a94b4] mb-2">
                       Transaction
                     </p>
