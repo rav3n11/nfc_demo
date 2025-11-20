@@ -740,9 +740,35 @@ function HomeContent() {
       font-size: 14px;
       color: #6c7899;
     }
-    .footer {
-      margin-top: 40px;
+    .stamp-section {
+      margin-top: 30px;
       padding-top: 30px;
+      border-top: 1px solid #e4e6f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .stamp {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .stamp-logo {
+      height: 80px;
+      width: auto;
+      opacity: 0.8;
+    }
+    .stamp-label {
+      font-size: 11px;
+      color: #8a94b4;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
       border-top: 1px solid #e4e6f3;
       text-align: center;
       font-size: 12px;
@@ -826,6 +852,13 @@ function HomeContent() {
 
       <div class="payment-method">
         ${receipt.total.toFixed(2)} ETB through CHAPA PAID
+      </div>
+
+      <div class="stamp-section">
+        <div class="stamp">
+          <img src="${window.location.origin}/elpa-blue.svg" alt="Ethiopian Electric Utility" class="stamp-logo" />
+          <div class="stamp-label">Ethiopian Electric Utility</div>
+        </div>
       </div>
 
       <div class="footer">
