@@ -240,14 +240,17 @@ function HomeContent() {
         };
         setCard(newCard);
         
-        if (pendingPayment && pendingPayment.cardSerial === cardSerial) {
+        const currentPendingPayment = pendingPayment;
+        if (currentPendingPayment && currentPendingPayment.cardSerial === cardSerial) {
+          setPendingPayment(null);
+          
           setStatus({
             tone: "info",
-            message: `Applying payment of +${formatETB(pendingPayment.userAmount)} to card…`,
+            message: `Applying payment of +${formatETB(currentPendingPayment.userAmount)} to card…`,
           });
           
           const updatedBalance = Number(
-            (balanceFromCard + pendingPayment.userAmount).toFixed(2),
+            (balanceFromCard + currentPendingPayment.userAmount).toFixed(2),
           );
           
           try {
@@ -256,13 +259,13 @@ function HomeContent() {
               ...newCard,
               balance: updatedBalance,
             });
-            setPaymentReference(pendingPayment.txRef);
-            setPendingPayment(null);
+            setPaymentReference(currentPendingPayment.txRef);
             setStatus({
               tone: "success",
-              message: `Card updated! Added ${formatETB(pendingPayment.userAmount)}. New balance: ${formatETB(updatedBalance)}.`,
+              message: `Card updated! Added ${formatETB(currentPendingPayment.userAmount)}. New balance: ${formatETB(updatedBalance)}.`,
             });
           } catch (error) {
+            setPendingPayment(currentPendingPayment);
             setStatus({
               tone: "alert",
               message: "Failed to write to card. Please try again.",
@@ -422,13 +425,13 @@ function HomeContent() {
                 priority
               />
               <span className="h-8 w-px bg-[#E5E7EB]" aria-hidden />
-              <Image
+        <Image
                 src="/ethiopost-logo.svg"
                 alt="Ethiopost logo"
                 width={140}
                 height={32}
-                priority
-              />
+          priority
+        />
             </div>
           </div>
         </header>
@@ -553,7 +556,7 @@ function HomeContent() {
               <div className="rounded-2xl border border-[#007FA3]/30 bg-[#E4F4F9] px-4 py-3 text-xs text-[#00516E] break-words">
                 <p className="font-semibold mb-1">Debug info:</p>
                 <p className="font-mono text-[10px]">{debugInfo}</p>
-              </div>
+        </div>
             )}
 
             <button
