@@ -150,7 +150,10 @@ function HomeContent() {
         const parsed = JSON.parse(savedState);
         if (parsed.card) setCard(parsed.card);
         if (parsed.amount) setAmount(parsed.amount);
-        if (parsed.pendingPayment) setPendingPayment(parsed.pendingPayment);
+        // Only restore pendingPayment if there's no receipt (payment not completed)
+        if (parsed.pendingPayment && !parsed.receipt) {
+          setPendingPayment(parsed.pendingPayment);
+        }
         if (parsed.receipt) setReceipt(parsed.receipt);
         if (parsed.status) setStatus(parsed.status);
       }
@@ -342,7 +345,8 @@ function HomeContent() {
         setCard(newCard);
         
         const currentPendingPayment = pendingPayment;
-        if (currentPendingPayment && currentPendingPayment.cardSerial === cardSerial) {
+        // Only apply pending payment if we're actively in the payment flow (no receipt means payment not completed yet)
+        if (currentPendingPayment && currentPendingPayment.cardSerial === cardSerial && !receipt) {
           setPendingPayment(null);
           
           setStatus({
