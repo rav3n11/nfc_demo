@@ -76,7 +76,7 @@ declare global {
   }
 }
 
-type FlowMode = "home" | "check-status" | "refill";
+type FlowMode = "home";
 
 const formatETB = (value: number) =>
   new Intl.NumberFormat("en-ET", {
@@ -220,7 +220,6 @@ function HomeContent() {
               cardSerial: cardInfo.serialNumber,
               processedAt: payload.processedAt ?? new Date().toISOString(),
             });
-            setFlowMode("refill");
             setStatus({
               tone: "success",
               message: `Payment confirmed! Read your card to apply +${formatETB(payload.userAmount ?? cardInfo.userAmount ?? 50)}.`,
@@ -346,17 +345,10 @@ function HomeContent() {
             });
           }
         } else {
-          if (flowMode === "check-status") {
-            setStatus({
-              tone: "success",
-              message: `Card balance: ${formatETB(balanceFromCard)}`,
-            });
-          } else {
-            setStatus({
-              tone: "success",
-              message: "Balance pulled directly from the card.",
-            });
-          }
+          setStatus({
+            tone: "success",
+            message: "Balance pulled directly from the card.",
+          });
         }
         
         setIsReading(false);
@@ -382,7 +374,7 @@ function HomeContent() {
       });
       setIsReading(false);
     }
-  }, [nfcSupported, pendingPayment, writeBalanceToCard, flowMode]);
+  }, [nfcSupported, pendingPayment, writeBalanceToCard]);
 
   const handleChapaRefill = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -482,7 +474,6 @@ function HomeContent() {
   );
 
   const resetToHome = () => {
-    setFlowMode("home");
     setCard(null);
     setAmount("50");
     setPaymentReference(null);
@@ -490,7 +481,7 @@ function HomeContent() {
     setPendingPayment(null);
     setStatus({
       tone: "info",
-      message: "Android Chrome + NFC only. Select an option to begin.",
+      message: "Android Chrome + NFC only. Start by reading your card to begin the refill process.",
     });
   };
 
@@ -499,33 +490,29 @@ function HomeContent() {
       {
         title: "Read card",
         isCompleted: card !== null,
-        isCurrent: flowMode === "refill" && card === null && !pendingPayment,
+        isCurrent: card === null && !pendingPayment,
       },
       {
         title: "Fill amount",
         isCompleted: pendingPayment !== null || receipt !== null,
-        isCurrent: flowMode === "refill" && card !== null && !pendingPayment && !receipt,
+        isCurrent: card !== null && !pendingPayment && !receipt,
       },
       {
         title: "Pay",
         isCompleted: receipt !== null,
-        isCurrent: flowMode === "refill" && pendingPayment !== null && !receipt,
+        isCurrent: pendingPayment !== null && !receipt,
       },
       {
         title: "Receipt",
         isCompleted: receipt !== null,
-        isCurrent: flowMode === "refill" && receipt !== null,
+        isCurrent: receipt !== null,
       },
     ];
     return steps;
-  }, [flowMode, card, pendingPayment, receipt]);
+  }, [card, pendingPayment, receipt]);
 
   const handleBack = () => {
-    if (flowMode === "home") {
-      window.location.href = "https://app.vps.gebeta.app";
-    } else {
-      resetToHome();
-    }
+    window.location.href = "https://app.vps.gebeta.app";
   };
 
   return (
@@ -557,8 +544,7 @@ function HomeContent() {
 
       <main className="mx-auto w-full max-w-4xl px-3 sm:px-4">
         {/* Home Screen */}
-        {flowMode === "home" && (
-          <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Blue Rounded Top Bar with Balance */}
             <div className="bg-[#2C2E7B] rounded-b-3xl sm:rounded-b-[2rem] pt-6 pb-8 sm:pt-8 sm:pb-10 px-4 sm:px-6 -mx-3 sm:-mx-4">
               <div className="flex items-center justify-between mb-6">
@@ -663,233 +649,27 @@ function HomeContent() {
                       className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-[#F5AD00] flex items-center justify-center text-white hover:bg-[#ED8800] transition disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label="Read card"
                     >
-                      {isReading ? (
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="animate-spin"
-                        >
-                          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                        </svg>
-                      ) : (
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                      )}
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={isReading ? "animate-spin" : ""}
+                      >
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                      </svg>
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Feature Cards */}
-            <div className="px-0 pb-4 sm:pb-6">
-              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-                <button
-                  onClick={() => {
-                    setFlowMode("check-status");
-                    setStatus({
-                      tone: "info",
-                      message: "Tap 'Read NFC card' to check the balance.",
-                    });
-                  }}
-                  className="group rounded-xl sm:rounded-2xl border border-[#e4e6f3] bg-white p-4 sm:p-6 text-left transition hover:border-[#F5AD00] hover:shadow-md"
-                >
-                  <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[#F5AD00]/10 group-hover:bg-[#F5AD00]/20">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#F5AD00"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 16v-4M12 8h.01" />
-                    </svg>
-                  </div>
-                  <h3 className="mb-1 sm:mb-2 text-base sm:text-lg font-semibold text-[#2C2E7B]">
-                    Check Card Status
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[#5d6b8b]">
-                    Read your NFC card to view the current balance
-                  </p>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setFlowMode("refill");
-                    setCard(null);
-                    setStatus({
-                      tone: "info",
-                      message: "Start by reading your card to begin the refill process.",
-                    });
-                  }}
-                  className="group rounded-xl sm:rounded-2xl border border-[#e4e6f3] bg-white p-4 sm:p-6 text-left transition hover:border-[#F5AD00] hover:shadow-md"
-                >
-                  <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[#2C2E7B]/10 group-hover:bg-[#2C2E7B]/20">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#2C2E7B"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </div>
-                  <h3 className="mb-1 sm:mb-2 text-base sm:text-lg font-semibold text-[#2C2E7B]">
-                    Refill Card
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[#5d6b8b]">
-                    Add balance to your card via Chapa payment
-                  </p>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Check Status Flow */}
-        {flowMode === "check-status" && (
-          <div className="space-y-4 sm:space-y-6">
-            {/* Back Button */}
-            <div className="flex items-center pt-4">
-              <button
-                onClick={resetToHome}
-                className="flex items-center gap-2 text-sm font-medium text-[#2C2E7B] transition hover:text-[#F5AD00]"
-                aria-label="Back to home"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                <span>Back</span>
-              </button>
-            </div>
-
-            <div className="rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 shadow-[0_20px_60px_rgba(44,46,123,0.08)]">
-              <h2 className="mb-4 text-xl sm:text-2xl font-semibold text-[#2C2E7B]">
-                Check Card Status
-              </h2>
-
-              {card && (
-                <div className="mb-4 sm:mb-6 rounded-xl sm:rounded-2xl border border-[#e1e3f0] bg-[#f8f9ff] p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-[#8a94b4]">
-                        Current Balance
-                      </p>
-                      <p className="mt-1 text-3xl sm:text-4xl font-bold text-[#2C2E7B]">
-                        {formatETB(card.balance)}
-                      </p>
-                    </div>
-                    <div className="rounded-xl bg-white px-3 sm:px-4 py-2 sm:py-3 text-sm">
-                      <p className="font-semibold text-[#2C2E7B] text-xs sm:text-sm break-all">
-                        {card.serialNumber}
-                      </p>
-                      <p className="text-xs text-[#8a94b4]">
-                        {new Date(card.lastSynced).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div
-                className={`mb-4 rounded-2xl px-4 py-3 text-sm ${
-                  status.tone === "success"
-                    ? "bg-white text-[#2C2E7B]"
-                    : status.tone === "alert"
-                      ? "bg-[#FDE2D9] text-[#9E2F1B]"
-                      : "bg-[#FFEFD1] text-[#7C4A00]"
-                }`}
-              >
-                {status.message}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleReadCard}
-                disabled={isReading || isWriting}
-                className="w-full rounded-2xl bg-[#F5AD00] py-4 text-center text-base font-semibold text-[#2C2E7B] transition hover:bg-[#ED8800] disabled:cursor-not-allowed disabled:bg-[#F5AD00]/50"
-              >
-                {isReading ? "Listening…" : "Read NFC card"}
-              </button>
-
-              {needsReset && (
-                <button
-                  type="button"
-                  onClick={() => writeBalanceToCard(0)}
-                  disabled={isWriting}
-                  className="mt-3 w-full rounded-2xl border border-[#F44C24]/40 bg-white py-3 text-sm font-semibold text-[#9E2F1B] transition hover:bg-[#FFF2EE] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isWriting ? "Writing…" : "Reset card to 0 ETB"}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Refill Flow */}
-        {flowMode === "refill" && (
-          <div className="space-y-4 sm:space-y-6">
-            {/* Back Button */}
-            <div className="flex items-center pt-4">
-              <button
-                onClick={resetToHome}
-                className="flex items-center gap-2 text-sm font-medium text-[#2C2E7B] transition hover:text-[#F5AD00]"
-                aria-label="Back to home"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                <span>Back</span>
-              </button>
-            </div>
-
-            {/* Stepper */}
-            <div className="rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 shadow-[0_20px_60px_rgba(44,46,123,0.08)]">
+            {/* Refill Flow - Stepper */}
+            <div className="mt-6 rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 shadow-[0_20px_60px_rgba(44,46,123,0.08)]">
               <div className="mb-4 sm:mb-6">
                 <h2 className="mb-4 text-xl sm:text-2xl font-semibold text-[#2C2E7B]">
                   Refill Card
@@ -957,31 +737,37 @@ function HomeContent() {
                 <h3 className="mb-4 text-lg sm:text-xl font-semibold text-[#2C2E7B]">
                   Step 1: Read Your Card
                 </h3>
-                <div
-                  className={`mb-4 rounded-2xl px-4 py-3 text-sm ${
-                    status.tone === "success"
-                      ? "bg-white text-[#2C2E7B]"
-                      : status.tone === "alert"
-                        ? "bg-[#FDE2D9] text-[#9E2F1B]"
-                        : "bg-[#FFEFD1] text-[#7C4A00]"
-                  }`}
-                >
-                  {status.message}
+                <div className="mb-4 rounded-2xl border-2 border-dashed border-[#F5AD00]/40 bg-[#FFF6E1] px-4 py-6 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#F5AD00"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="animate-bounce"
+                    >
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold text-[#2C2E7B] mb-1">
+                        Scan your card at the top
+                      </p>
+                      <p className="text-xs text-[#8a94b4]">
+                        Use the balance card button above to read your NFC card
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleReadCard}
-                  disabled={isReading || isWriting}
-                  className="w-full rounded-2xl bg-[#F5AD00] py-4 text-center text-base font-semibold text-[#2C2E7B] transition hover:bg-[#ED8800] disabled:cursor-not-allowed disabled:bg-[#F5AD00]/50"
-                >
-                  {isReading ? "Listening…" : "Read NFC card"}
-                </button>
                 {needsReset && (
                   <button
                     type="button"
                     onClick={() => writeBalanceToCard(0)}
                     disabled={isWriting}
-                    className="mt-3 w-full rounded-2xl border border-[#F44C24]/40 bg-white py-3 text-sm font-semibold text-[#9E2F1B] transition hover:bg-[#FFF2EE] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-2xl border border-[#F44C24]/40 bg-white py-3 text-sm font-semibold text-[#9E2F1B] transition hover:bg-[#FFF2EE] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isWriting ? "Writing…" : "Reset card to 0 ETB"}
                   </button>
@@ -1132,7 +918,6 @@ function HomeContent() {
               </div>
             )}
         </div>
-        )}
       </main>
     </div>
   );
