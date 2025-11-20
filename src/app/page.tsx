@@ -271,6 +271,8 @@ function HomeContent() {
               tone: "alert",
               message: "Payment confirmed but card info was lost. Please start over.",
             });
+            // Clear localStorage when card info is lost
+            clearAppState();
           }
           localStorage.removeItem("chapa_pending_card");
         } else {
@@ -278,6 +280,8 @@ function HomeContent() {
             tone: "alert",
             message: "Payment was not completed.",
           });
+          // Clear localStorage when payment was not completed
+          clearAppState();
         }
       } catch (error) {
         console.error(error);
@@ -288,6 +292,8 @@ function HomeContent() {
               ? error.message
               : "Unable to verify payment.",
         });
+        // Clear localStorage on payment verification error
+        clearAppState();
       } finally {
         setIsVerifying(false);
         window.history.replaceState({}, "", "/");
