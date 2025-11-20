@@ -379,6 +379,8 @@ function HomeContent() {
               tone: "success",
               message: `Card updated! Added ${formatETB(currentPendingPayment.userAmount)}. New balance: ${formatETB(updatedBalance)}.`,
             });
+            // Clear localStorage when process completes successfully
+            clearAppState();
           } catch (error) {
             setPendingPayment(currentPendingPayment);
             setStatus({
@@ -515,6 +517,15 @@ function HomeContent() {
     [amount, card, MAX_AMOUNT],
   );
 
+  const clearAppState = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("chapa_pending_card");
+    } catch (error) {
+      console.error("Failed to clear localStorage:", error);
+    }
+  };
+
   const resetToHome = () => {
     setCard(null);
     setAmount("50");
@@ -525,12 +536,7 @@ function HomeContent() {
       tone: "info",
       message: "Android Chrome + NFC only. Start by reading your card to begin the refill process.",
     });
-    // Clear localStorage when resetting
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.error("Failed to clear localStorage:", error);
-    }
+    clearAppState();
   };
 
   const refillSteps = useMemo(() => {
