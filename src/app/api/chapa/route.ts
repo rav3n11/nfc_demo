@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       .json()
       .catch(() => ({ amount: 50, cardSerial: "UNKNOWN" }));
 
-    const txRef = `ELPA-${Date.now()}`;
+    const txRef = `EBR-${Date.now()}`;
     const origin = request.headers.get("origin") ?? "http://localhost:3000";
 
     const payload = {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         userAmount: String(userAmount ?? 50),
       },
       customization: {
-        title: "ELPA NFC refill",
+        title: "Electric Bill Recharge",
         description: "NFC top-up demo via Chapa",
       },
     };
