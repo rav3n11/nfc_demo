@@ -115,6 +115,8 @@ const extractBalance = (message: NDEFMessagePayload): number | null => {
   return null;
 };
 
+const STORAGE_KEY = "elpa_app_state";
+
 function HomeContent() {
   const [flowMode, setFlowMode] = useState<FlowMode>("home");
   const [card, setCard] = useState<CardSnapshot | null>(null);
@@ -127,16 +129,56 @@ function HomeContent() {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [isLoadingState, setIsLoadingState] = useState(true);
   const MAX_AMOUNT = 10000;
 
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
     tone: "info",
-    message: "Android Chrome + NFC only. Select an option to begin.",
+    message: "Android Chrome + NFC only. Start by reading your card to begin the refill process.",
   });
   const [nfcSupported, setNfcSupported] = useState(false);
   const [isReading, setIsReading] = useState(false);
   const [isWriting, setIsWriting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    try {
+      const savedState = localStorage.getItem(STORAGE_KEY);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        if (parsed.card) setCard(parsed.card);
+        if (parsed.amount) setAmount(parsed.amount);
+        if (parsed.pendingPayment) setPendingPayment(parsed.pendingPayment);
+        if (parsed.receipt) setReceipt(parsed.receipt);
+        if (parsed.status) setStatus(parsed.status);
+      }
+    } catch (error) {
+      console.error("Failed to load state from localStorage:", error);
+    } finally {
+      setIsLoadingState(false);
+    }
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === "undefined" || isLoadingState) return;
+    
+    try {
+      const stateToSave = {
+        card,
+        amount,
+        pendingPayment,
+        receipt,
+        status,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error("Failed to save state to localStorage:", error);
+    }
+  }, [card, amount, pendingPayment, receipt, status, isLoadingState]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "NDEFReader" in window) {
@@ -483,6 +525,12 @@ function HomeContent() {
       tone: "info",
       message: "Android Chrome + NFC only. Start by reading your card to begin the refill process.",
     });
+    // Clear localStorage when resetting
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.error("Failed to clear localStorage:", error);
+    }
   };
 
   const refillSteps = useMemo(() => {
@@ -799,6 +847,42 @@ function HomeContent() {
       }, 250);
     }
   };
+
+  // Skeleton loader component
+  const SkeletonCard = () => (
+    <div className="rounded-2xl sm:rounded-3xl border border-[#e4e6f3] bg-white p-4 sm:p-6 shadow-lg animate-pulse">
+      <div className="h-4 bg-[#e4e6f3] rounded w-32 mb-4"></div>
+      <div className="h-8 bg-[#e4e6f3] rounded w-48 mb-2"></div>
+      <div className="h-4 bg-[#e4e6f3] rounded w-24"></div>
+    </div>
+  );
+
+  if (isLoadingState) {
+    return (
+      <div className="relative min-h-screen bg-[#f5f6fb] text-[#1f2a44]">
+        <main className="mx-auto w-full max-w-4xl px-3 sm:px-4 py-6">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Blue Rounded Top Bar Skeleton */}
+            <div className="bg-[#2C2E7B] rounded-b-3xl sm:rounded-b-[2rem] pt-6 pb-8 sm:pt-8 sm:pb-10 px-4 sm:px-6 -mx-3 sm:-mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <div className="h-10 w-10 bg-white/20 rounded-lg animate-pulse"></div>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="h-12 sm:h-16 w-24 sm:w-32 bg-white/20 rounded animate-pulse"></div>
+                  <div className="h-8 sm:h-10 w-px bg-white/30"></div>
+                  <div className="h-10 sm:h-12 w-20 sm:w-24 bg-white/20 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <SkeletonCard />
+            </div>
+            {/* Stepper Skeleton */}
+            <SkeletonCard />
+            {/* Step Content Skeleton */}
+            <SkeletonCard />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#f5f6fb] text-[#1f2a44]">
