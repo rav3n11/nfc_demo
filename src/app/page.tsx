@@ -589,33 +589,10 @@ function HomeContent() {
 
               {/* Balance Display */}
               <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-2">
+                <div className="mb-2">
                   <p className="text-xs sm:text-sm font-medium text-[#8a94b4] uppercase tracking-wider">
                     Card Balance
                   </p>
-                  {card && (
-                    <button
-                      onClick={handleReadCard}
-                      disabled={isReading}
-                      className="flex items-center gap-1 text-xs text-[#2C2E7B] hover:text-[#F5AD00] transition disabled:opacity-50"
-                      aria-label="Refresh balance"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={isReading ? "animate-spin" : ""}
-                      >
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                      </svg>
-                      <span className="hidden sm:inline">Refresh</span>
-                    </button>
-                  )}
                 </div>
                 {card ? (
                   <div className="flex items-end justify-between">
