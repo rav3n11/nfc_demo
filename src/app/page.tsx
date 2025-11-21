@@ -1326,7 +1326,7 @@ function HomeContent() {
                   disabled={isReading || isWriting}
                   className="w-full rounded-2xl bg-[#F5AD00] py-4 text-center text-base font-semibold text-[#2C2E7B] transition hover:bg-[#ED8800] disabled:cursor-not-allowed disabled:bg-[#F5AD00]/50"
                 >
-                  {isReading ? "Listening…" : "Top up card with NFC"}
+                  {isReading ? "Listening…" : "Tap your card again to top up with NFC"}
                 </button>
               </div>
             )}
