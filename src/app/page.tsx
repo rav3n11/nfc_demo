@@ -133,6 +133,8 @@ function HomeContent() {
   const MAX_AMOUNT = 10000;
   // Ref to track if we're in an active payment flow (prevents applying payments after reset)
   const isActivePaymentFlowRef = useRef(false);
+  const [logoTapCount, setLogoTapCount] = useState(0);
+  const logoTapTimeoutRef = useRef<number | null>(null);
 
   const [status, setStatus] = useState<{ tone: StatusTone; message: string }>({
     tone: "info",
@@ -538,6 +540,68 @@ function HomeContent() {
     }
   };
 
+  const resetLogoTapSequence = useCallback(() => {
+    if (logoTapTimeoutRef.current) {
+      clearTimeout(logoTapTimeoutRef.current);
+      logoTapTimeoutRef.current = null;
+    }
+    setLogoTapCount(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (logoTapTimeoutRef.current) {
+        clearTimeout(logoTapTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleLogoSecretTap = useCallback(async () => {
+    if (!card) {
+      setStatus({
+        tone: "alert",
+        message: "Read a card first to use the dev reset shortcut.",
+      });
+      return;
+    }
+
+    const nextCount = logoTapCount + 1;
+    setLogoTapCount(nextCount);
+
+    if (logoTapTimeoutRef.current) {
+      clearTimeout(logoTapTimeoutRef.current);
+    }
+    logoTapTimeoutRef.current = window.setTimeout(() => {
+      setLogoTapCount(0);
+      logoTapTimeoutRef.current = null;
+    }, 2000);
+
+    if (nextCount >= 5) {
+      resetLogoTapSequence();
+      try {
+        await writeBalanceToCard(0);
+        setCard((prev) =>
+          prev
+            ? {
+                ...prev,
+                balance: 0,
+                lastSynced: new Date().toISOString(),
+              }
+            : prev,
+        );
+        setStatus({
+          tone: "success",
+          message: "Dev shortcut: Card cleared to 0 ETB.",
+        });
+      } catch (error) {
+        setStatus({
+          tone: "alert",
+          message: "Dev shortcut failed to reset the card.",
+        });
+      }
+    }
+  }, [card, logoTapCount, resetLogoTapSequence, writeBalanceToCard]);
+
   const resetToHome = () => {
     setCard(null);
     setAmount("50");
@@ -546,6 +610,7 @@ function HomeContent() {
     setPendingPayment(null);
     // Mark payment flow as inactive when resetting
     isActivePaymentFlowRef.current = false;
+    resetLogoTapSequence();
     setStatus({
       tone: "info",
       message: "Android Chrome + NFC only. Start by reading your card to begin the refill process.",
@@ -991,14 +1056,15 @@ function HomeContent() {
                     priority
                   />
                   <span className="h-8 sm:h-10 w-px bg-white/30" aria-hidden />
-        <Image
+                  <Image
                     src="/ethiopost-logo.svg"
                     alt="Ethiopost logo"
                     width={80}
                     height={80}
-                    className="h-10 sm:h-12 w-auto"
-          priority
-        />
+                    className="h-10 sm:h-12 w-auto cursor-pointer select-none"
+                    priority
+                    onClick={handleLogoSecretTap}
+                  />
                 </div>
               </div>
 
@@ -1260,7 +1326,7 @@ function HomeContent() {
                   disabled={isReading || isWriting}
                   className="w-full rounded-2xl bg-[#F5AD00] py-4 text-center text-base font-semibold text-[#2C2E7B] transition hover:bg-[#ED8800] disabled:cursor-not-allowed disabled:bg-[#F5AD00]/50"
                 >
-                  {isReading ? "Listening…" : "Read NFC card to apply payment"}
+                  {isReading ? "Listening…" : "Top up card with NFC"}
                 </button>
               </div>
             )}
